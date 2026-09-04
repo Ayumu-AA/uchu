@@ -360,6 +360,8 @@
   .sn-mute,.sn-pause{position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:50%;border:1px solid rgba(233,237,247,.18);background:rgba(7,10,20,.55);color:#aab2cc;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
   .sn-mute:focus-visible,.sn-pause:focus-visible{outline:2px solid #ffb42a;outline-offset:2px}
   .sn-pause{right:48px;font-size:12px;letter-spacing:-1px}
+  .sn-home{position:absolute;left:48px;top:8px;width:34px;height:34px;border-radius:50%;border:1px solid rgba(233,237,247,.18);background:rgba(7,10,20,.55);color:#aab2cc;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .sn-home:focus-visible{outline:2px solid #ffb42a;outline-offset:2px}
   .sn-over .sub{font-size:11.5px;color:#aab2cc;margin-top:6px}
   .sn-lineup{display:flex;justify-content:center;align-items:flex-end;gap:6px;margin:4px 0 2px}
   .sn-lineup i{display:block;border-radius:50%}
@@ -478,6 +480,14 @@
     help.addEventListener('pointerdown', ev => ev.stopPropagation()); help.addEventListener('pointerup', ev => ev.stopPropagation());
     help.addEventListener('click', () => showHelp());
     stage.appendChild(help);
+    // ホーム（ゲーム一覧）へ戻る。単体公開のときだけ出す（Artifact では index.html が無い）
+    const homeUrl = opts.homeUrl || null;
+    if (homeUrl) {
+      const home = el('button', 'sn-home'); home.type = 'button'; home.textContent = '⌂'; home.setAttribute('aria-label', 'ゲーム一覧へ');
+      home.addEventListener('pointerdown', ev => ev.stopPropagation()); home.addEventListener('pointerup', ev => ev.stopPropagation());
+      home.addEventListener('click', () => goHome());
+      stage.appendChild(home);
+    }
     const order = el('div', 'sn-order');
     E.TIERS.forEach(t => { const d = el('div'); const i = document.createElement('i'); const sz = 8 + t.r * 0.16;
       const a = ASSETS[t.key];
@@ -500,7 +510,7 @@
       seen: new Set(), maxTierBefore: +store.get(K.maxTier, -1),
       items: loadItems(), earned: new Set(), itemsUsed: 0, telescope: false, chain: 0,
       armed: null, toastTimer: 0, itemEls: {}, saveTimer: 0,
-      pauseOpen: false, pauseBox: null, resumeOpen: false, helpOpen: false,
+      pauseOpen: false, pauseBox: null, resumeOpen: false, helpOpen: false, homeUrl,
     };
     state.held = { tier: state.queue.shift() }; state.queue.push(randTier());
     buildItemBar();
@@ -592,8 +602,12 @@
       if (!confirmReset) { confirmReset = true; b2.textContent = '今の盤面は消える。もう一度タップで最初から'; return; }
       clearSave(); restart(true);
     };
-    box.append(b1, b2, sub); s.pauseBox = box; s.stage.appendChild(box); b1.focus({ preventScroll: true });
+    if (s.homeUrl) { const b3 = el('button', 'sn-btn ghost'); b3.textContent = 'ゲーム一覧へ'; b3.onclick = () => goHome(); box.append(b1, b2, b3, sub); }
+    else box.append(b1, b2, sub);
+    s.pauseBox = box; s.stage.appendChild(box); b1.focus({ preventScroll: true });
   }
+  // ゲーム一覧（ホーム）へ。中断データは保存済みなので、戻っても「つづきから」で再開できる
+  function goHome() { const s = state; if (!s || !s.homeUrl) return; writeSave(); location.href = s.homeUrl; }
   function resumeGame() {
     const s = state; if (!s || !s.pauseOpen) return;
     if (s.pauseBox) s.pauseBox.remove();
@@ -928,7 +942,8 @@
       d.append(im, b); lineup.appendChild(d);
     });
     const btn = el('button', 'sn-btn'); btn.textContent = 'もう一回'; btn.onclick = () => restart(true);
-    box.appendChild(btn); s.stage.appendChild(box); btn.focus();
+    box.appendChild(btn);
+    if (s.homeUrl) { const hb = el('button', 'sn-btn ghost'); hb.textContent = 'ゲーム一覧へ'; hb.onclick = () => { location.href = s.homeUrl; }; box.appendChild(hb); } s.stage.appendChild(box); btn.focus();
   }
 
   function updateHud() {
@@ -1048,6 +1063,6 @@
   global.SuikaGame = api;
 })(window);
 </script>
-<script>SuikaGame.mount(document.getElementById('app'));</script>
+<script>SuikaGame.mount(document.getElementById('app'), { homeUrl: './index.html' });</script>
 </body>
 </html>

@@ -868,7 +868,7 @@ function showTutEnd(){
     <div class="chainrow">🥖 すい臓・🟢たんのうを買うと、肉や脂肪も最後まで吸収できる</div>
     <div class="chainrow">⚠️ こまったら右上の<b>？</b>でいつでもルールを見られる</div>
     <button class="btn" onclick="closeOvl();startGame('easy')">かんたんをはじめる</button>
-    <button class="btn sub" onclick="closeOvl();showLevelSelect()">ホームへ</button>`);
+    <button class="btn sub" onclick="closeOvl();showLevelSelect()">タイトルへ</button>`);
   vib([60,40,60,40,150]);
 }
 
@@ -999,8 +999,10 @@ function showLevelSelect(){
         <span class="lvname">${L.name}</span>
         <span class="lvdesc">${L.turns}ターン・${L.time}${recOf(L)}<br>${L.desc}</span>
       </button>`).join('')}
-    <button class="btn sub" style="margin-top:10px;font-size:12px" onclick="closeOvl();startTutorial()">🎓 はじめての人はチュートリアル（3ターン・約2分）</button>`);
+    <button class="btn sub" style="margin-top:10px;font-size:12px" onclick="closeOvl();startTutorial()">🎓 はじめての人はチュートリアル（3ターン・約2分）</button>
+    <button class="btn sub" style="margin-top:6px;font-size:12px" onclick="goHome()">🎮 ゲーム一覧へ</button>`);
 }
+function goHome(){ location.href='./index.html'; } /* data-uchu-home */
 function showCondCard(){
   ovl(`<p class="c" style="color:#9aa0b8;font-size:11px;letter-spacing:.1em">きょうのからだ</p>
     <div class="bigico">${COND.ico}</div><h2>${COND.name}</h2>
@@ -1075,7 +1077,7 @@ function showClearResult(win){
     ${dead?'<p class="c" style="color:#ffb4b4">不要物の処理か、病気・けがへの備えが足りなかった</p>':''}
     <button class="btn" onclick="closeOvl();startGame('${LEVEL.key}')">もう1回</button>
     ${cleared&&LEVEL.key!=='hard'?`<button class="btn sub" onclick="closeOvl();startGame('${LEVEL.key==='easy'?'normal':'hard'}')">${LEVEL.key==='easy'?'ふつう':'むずかしい'}にちょうせん</button>`:''}
-    <button class="btn sub" onclick="closeOvl();showLevelSelect()">ホームへ</button>`);
+    <button class="btn sub" onclick="closeOvl();showLevelSelect()">タイトルへ</button>`);
   vib(cleared?[60,40,60,40,150]:[200,80,200]);
 }
 
@@ -1129,14 +1131,15 @@ function showStudy(){
 function showMenu(){
   if(!G) return;
   const note = LEVEL.key==='easy'
-    ? '※かんたんは途中セーブがないので、ホームにもどると最初からになります'
-    : '※ここまでの進行は自動セーブずみ。ホームにもどっても「つづきから」で再開できます';
+    ? '※かんたんは途中セーブがないので、タイトルやゲーム一覧にもどると最初からになります'
+    : '※ここまでの進行は自動セーブずみ。タイトルやゲーム一覧にもどっても「つづきから」で再開できます';
   ovl(`<h2>メニュー</h2>
     <p class="c" style="color:#9aa0b8;font-size:11px">${LEVEL.name}・${MODE==='clear'?`クリア（目標★${CFG.goalVP}）`:'スコアアタック'}・${G.turn}ターン目</p>
     <button class="btn" onclick="closeOvl()">▶ つづける</button>
     <button class="btn sub" onclick="showRules()">？ ルールをみる</button>
     <button class="btn sub" onclick="closeOvl();startGame(LEVEL.key)">🔁 さいしょからやり直す</button>
-    <button class="btn sub" onclick="closeOvl();showLevelSelect()">🏠 ホームへもどる</button>
+    <button class="btn sub" onclick="closeOvl();showLevelSelect()">🏠 タイトルへもどる</button>
+    <button class="btn sub" onclick="spSave();goHome()">🎮 ゲーム一覧へ</button>
     <p class="c" style="color:#6d7390;font-size:10px;margin-top:8px">${note}</p>`);
 }
 

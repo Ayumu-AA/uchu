@@ -162,12 +162,12 @@ body.practice #hud,body.practice #moonHud,body.practice #ff{visibility:hidden}
       <button data-d="1">ふつう<small>明るい星 2〜4 つ・目標 35 OP</small></button>
       <button data-d="2">むずかしい<small>全部の星・ヒントなし・目標 55 OP</small></button>
     </div>
-    <div class="row"><button id="continue" hidden>つづきから<small id="contInfo"></small></button><button id="titlePractice">練習する<small>星座を選んで誘導つきでなぞる</small></button><button id="titleHelp">遊び方</button></div>
+    <div class="row"><button id="continue" hidden>つづきから<small id="contInfo"></small></button><button id="titlePractice">練習する<small>星座を選んで誘導つきでなぞる</small></button><button id="titleHelp">遊び方</button><button id="titleHome" class="ghost" data-uchu-home>ゲーム一覧へ</button></div>
     <div class="found" id="titleFound"></div>
   </div>
   <div id="pausePanel" class="overlay" hidden>
     <div class="panel">
-      <div class="prow"><h2 id="ppTitle">一時停止</h2><div class="row"><button id="resume">再開</button><button id="openGuide" class="ghost">星座図鑑</button><button id="openPractice" class="ghost">練習する</button><button id="abort" class="ghost">中断してタイトルへ</button></div></div>
+      <div class="prow"><h2 id="ppTitle">一時停止</h2><div class="row"><button id="resume">再開</button><button id="openGuide" class="ghost">星座図鑑</button><button id="openPractice" class="ghost">練習する</button><button id="abort" class="ghost">中断してタイトルへ</button><button id="pauseHome" class="ghost">ゲーム一覧へ</button></div></div>
       <div id="tonightHints"></div>
       <details id="guide">
         <summary>星座図鑑（タップで季節と見ごろ）</summary>
@@ -195,7 +195,7 @@ body.practice #hud,body.practice #moonHud,body.practice #ff{visibility:hidden}
     <h2 id="resTitle"></h2>
     <div class="big" id="resOP"></div>
     <p id="resBody"></p>
-    <div class="row"><button id="again">もう一周</button></div>
+    <div class="row"><button id="again">もう一周</button><button id="resultHome" class="ghost">ゲーム一覧へ</button></div>
   </div>
 </div>
 <script>
@@ -1771,6 +1771,9 @@ $('pbarOther').addEventListener('click',openPick);
 $('pbarQuit').addEventListener('click',endPractice);
 $('title').addEventListener('click',e=>{const b=e.target.closest('button[data-d]');if(b)startSeason(+b.dataset.d);});
 $('again').addEventListener('click',()=>{$('result').hidden=true;$('title').hidden=false;refreshTitle();});
+// ゲーム一覧（ホーム）へ。プレイ中は夜の開始時点のセーブが残っているので、戻っても「つづきから」が出る
+const HOME_URL='./index.html';
+for(const id of ['titleHome','pauseHome','resultHome']){const b=$(id);if(b)b.addEventListener('click',()=>{location.href=HOME_URL;});}
 window.addEventListener('resize',()=>{resize();resizeOrbit();});
 refreshTitle();
 game.pool=TARGETS_R1.map(id=>byId[id]);game.targets=game.pool.slice(0,TONIGHT_N);buildTargetLines();renderCards();renderNote();renderStatus();
