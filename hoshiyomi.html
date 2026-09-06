@@ -16,6 +16,7 @@ header{display:flex;align-items:baseline;gap:12px;padding:7px 14px;border-bottom
 header h1{font-size:15px;letter-spacing:.3em;font-weight:600}
 header .sub{font-size:11px;color:var(--dim)}
 header #hdrNight{margin-left:auto}
+header #mute{font-size:13px;padding:3px 8px;border-radius:12px;border:1px solid var(--line);background:transparent;cursor:pointer}
 header #pause{font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--dim);cursor:pointer;letter-spacing:.1em}
 header #pause:focus-visible{outline:2px solid var(--accent)}
 .card{cursor:pointer}
@@ -108,6 +109,14 @@ body.practice #hud,body.practice #moonHud,body.practice #ff{visibility:hidden}
 .overlay button small{display:block;font-size:10px;color:var(--dim);letter-spacing:0;margin-top:2px}
 .overlay .big{font-size:40px;color:var(--gold);font-variant-numeric:tabular-nums}
 .overlay .found{font-size:12px;color:var(--dim)}
+.recapStats{display:flex;gap:10px;flex-wrap:wrap}
+.recapStats .st{flex:1 1 90px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;text-align:center}
+.recapStats .st b{display:block;font-size:20px;color:var(--gold);font-variant-numeric:tabular-nums}
+.recapStats .st span{font-size:10px;color:var(--dim);letter-spacing:.1em}
+.tip{border-left:3px solid var(--accent);padding:6px 12px;text-align:left}
+.tip .tipLbl{font-size:10px;color:var(--accent);letter-spacing:.2em;margin-bottom:4px}
+.tip #recapTip{font-size:13px;color:var(--ink);line-height:1.8}
+.tip #recapTip b{color:var(--accent);font-weight:500}
 .modes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .overlay button.mode{border-color:var(--line);color:var(--dim);padding:10px 16px}
 .overlay button.mode.on{border-color:var(--gold);color:var(--gold);background:rgba(255,215,122,.08)}
@@ -154,7 +163,7 @@ body.practice #hud,body.practice #moonHud,body.practice #ff{visibility:hidden}
 </head>
 <body>
 <div id="app">
-  <header><h1>ホシヨミ</h1><span class="sub" id="hdrLoc">東京 · 北緯35.7°</span><span id="hdrNight" class="sub"></span><span id="hdrOP" class="op"></span><div id="opwrap"><div id="opbar"></div></div><button id="pause" type="button" aria-label="一時停止">❚❚</button></header>
+  <header><h1>ホシヨミ</h1><span class="sub" id="hdrLoc">東京 · 北緯35.7°</span><span id="hdrNight" class="sub"></span><span id="hdrOP" class="op"></span><div id="opwrap"><div id="opbar"></div></div><button id="mute" type="button" aria-label="音">🔊</button><button id="pause" type="button" aria-label="一時停止">❚❚</button></header>
   <div id="space">
     <div id="note">
       <div class="nhead"><span class="nt">今夜の観測ノート</span><div class="ticks"><span style="left:0%">18時</span><span style="left:27.3%">21時</span><span style="left:54.5%">0時</span><span style="left:81.8%">3時</span><span style="left:100%;transform:translateX(-100%)">5時</span></div></div>
@@ -179,9 +188,9 @@ body.practice #hud,body.practice #moonHud,body.practice #ff{visibility:hidden}
     <p>夜ごとに流れていく空から、知っている形を見つけて星を点ける。<br><b>春・夏・秋・冬の 4 夜で目標のポイントに届けば達成。</b>星座ごとに点数がちがう（★の数）。</p>
     <div class="modes"><button id="modeClear" class="mode on" type="button">目標クリア<small>4 夜で目標 pt に届けば達成</small></button><button id="modeScore" class="mode" type="button">スコアアタック<small>4 夜でどこまで稼げるか。ベスト記録を保存</small></button></div>
     <div class="row">
-      <button data-d="0">やさしい<small id="dsub0">目印の星 1 つ・4 夜で 100 pt</small></button>
-      <button data-d="1">ふつう<small id="dsub1">明るい星 2〜4 つ・4 夜で 150 pt</small></button>
-      <button data-d="2">むずかしい<small id="dsub2">全部の星・ヒントなし・4 夜で 200 pt</small></button>
+      <button data-d="0">やさしい<small id="dsub0">目印の星 1 つ・4 夜で 75 pt</small></button>
+      <button data-d="1">ふつう<small id="dsub1">明るい星 2〜4 つ・4 夜で 110 pt</small></button>
+      <button data-d="2">むずかしい<small id="dsub2">全部の星・ヒントなし・4 夜で 140 pt</small></button>
     </div>
     <div class="row"><button id="continue" hidden>つづきから<small id="contInfo"></small></button><button id="titlePractice">練習する<small>星座を選んで誘導つきでなぞる</small></button><button id="titleHelp">遊び方</button><button id="titleHome" class="ghost" data-uchu-home>ゲーム一覧へ</button></div>
     <div class="found" id="titleFound"></div>
@@ -197,12 +206,20 @@ body.practice #hud,body.practice #moonHud,body.practice #ff{visibility:hidden}
       <details id="rules" open>
         <summary>遊び方</summary>
         <div class="rules">
-          <p>夜は 18:00 から明け方まで、空が勝手に流れていく。<b>今夜のカードの形</b>を空の中から探して、カードで大きく描かれている星（目印の星）をタップ。合っていれば金色に点き、違えば赤く光るだけ（減点なし）。目印の星が全部点くと形が浮かび上がって完成、pt が入る。押す星の数は難易度で変わる：やさしいは一番明るい 1 つ、ふつうは明るい 2〜4 つ、むずかしいは全部。ただし<b>星が細かく密集している星座（おうし・かに・うお・みずがめ・やぎ・うさぎ・ヘルクレス・てんびん・おひつじ・こと）は、どの難易度でも目印の星 1 つ</b>で見つけたことになる。</p>
+          <p>夜は 18:00 から明け方まで、空が勝手に流れていく。<b>今夜のカードの形</b>を空の中から探して、カードで大きく描かれている星（目印の星）をタップ。合っていれば金色に点き、違えば赤く光るだけ（減点なし）。目印の星が全部点くと形が浮かび上がって完成、pt が入る。押す星の数は難易度で変わる：やさしいは一番明るい 1 つ、ふつうは明るい 2〜4 つ、むずかしいは全部。上の観測ノートの「いつ・どの方角」のヒントは、やさしいは 4 夜とも、ふつうは <b>2 夜目まで</b>、むずかしいは出ない。3 夜目からは星座図鑑の「季節と見ごろ」と、夜の終わりの「今夜の知識」が頼りになる。違う星を続けて押すと少しのあいだ押せなくなる。流れ星は 1 夜 12 pt まで。ただし<b>星が細かく密集している星座（おうし・かに・うお・みずがめ・やぎ・うさぎ・ヘルクレス・てんびん・おひつじ・こと）は、どの難易度でも目印の星 1 つ</b>で見つけたことになる。</p>
           <p>空を横にドラッグすると向きが変わる。ホイール・ピンチ・右下の＋−で拡大、拡大中は縦ドラッグで上下にも動ける。星は東から昇って西へ沈む。沈んだ星の線は消えるので、沈む前に仕上げる。</p>
           <p>夜は 春（4/15）→ 夏（7/15）→ 秋（10/15）→ 冬（1/15）の 4 つ。季節ごとに見える星座がまるごと入れ替わる。月が出ている夜は暗い星が見えない（右上に「見える星 ○等まで」）。雲の下の星は押せない。流れ星は消える前にタップで +1 pt。今夜のカードを全部見つけると流れ星が増えるので、残り時間の稼ぎになる。星座が見つからない夜の保険にもなる。</p>
-          <p><b>クリア条件：4 夜が終わったときに ポイント（pt）が目標に届いていること</b>（やさしい 100／ふつう 150／むずかしい 200）。スコアアタックは目標なし、4 夜の合計 pt のベスト記録を難易度ごとに残す。星座の点数は ★1 = 1、★2 = 2、★3 = 4 pt。同じ夜に 2 つ目以降は +1 ずつ、低空で完成 +2、満月の夜 +1。「今夜の依頼」を達成すると +3。1 つも間違えずに完成すると「ミスなし +1」。完成 2 つごとに新しい形が手札に加わる。30 夜で目標 pt に届けば達成。</p>
+          <p><b>クリア条件：4 夜が終わったときに ポイント（pt）が目標に届いていること</b>（やさしい 75／ふつう 110／むずかしい 140）。スコアアタックは目標なし、4 夜の合計 pt のベスト記録を難易度ごとに残す。星座の点数は ★1 = 1、★2 = 2、★3 = 4 pt。同じ夜に 2 つ目以降は +1 ずつ、低空で完成 +2、満月の夜 +1。「今夜の依頼」を達成すると +3。1 つも間違えずに完成すると「ミスなし +1」。完成 2 つごとに新しい形が手札に加わる。30 夜で目標 pt に届けば達成。</p>
         </div>
       </details>
+    </div>
+  </div>
+  <div id="recap" class="overlay" hidden>
+    <div class="panel">
+      <div class="prow"><h2 id="recapTitle">春の夜 おわり</h2></div>
+      <div class="recapStats" id="recapStats"></div>
+      <div class="tip"><div class="tipLbl">今夜の知識</div><div id="recapTip"></div></div>
+      <div class="row"><button id="recapNext">次の夜へ</button></div>
     </div>
   </div>
   <div id="pick" class="overlay" hidden>
@@ -1249,6 +1266,29 @@ function toHorizontal(ra,dec,lat,lst){
 }
 
 // =====================================================================
+// 効果音：外部ファイルなし。Web Audio で合成。ミュート可
+// =====================================================================
+let AC=null,muted=false;try{muted=localStorage.getItem('hoshiyomi.mute')==='1';}catch(e){}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}}if(AC.state==='suspended')AC.resume();return AC;}
+function tone(f,t0,dur,type='sine',vol=0.18,slide=0){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(f,t0);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,f+slide),t0+dur);
+  g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(vol,t0+0.012);g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);o.connect(g);g.connect(a.destination);o.start(t0);o.stop(t0+dur+0.02);}
+function noise(t0,dur,vol=0.12,hp=1200){const a=ac();if(!a)return;const n=a.sampleRate*dur,b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
+  const s=a.createBufferSource();s.buffer=b;const f=a.createBiquadFilter();f.type='highpass';f.frequency.value=hp;const g=a.createGain();g.gain.setValueAtTime(vol,t0);g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);s.connect(f);f.connect(g);g.connect(a.destination);s.start(t0);}
+function sfx(kind){
+  if(muted)return;const a=ac();if(!a)return;const t0=a.currentTime;
+  switch(kind){
+    case 'hit': tone(880,t0,0.12,'sine',0.14);tone(1320,t0+0.03,0.16,'sine',0.08);break;                        // 星が点く：澄んだ高い音
+    case 'miss': tone(160,t0,0.16,'triangle',0.14,-60);break;                                                  // 違う星：低く短く
+    case 'complete': [523,659,784,1047].forEach((f,i)=>tone(f,t0+i*0.07,0.35,'sine',0.13));tone(2093,t0+0.3,0.5,'sine',0.05);break; // 完成：上昇アルペジオ
+    case 'meteor': noise(t0,0.35,0.1,2500);tone(1800,t0,0.3,'sine',0.06,-1200);break;                          // 流れ星：シュッ
+    case 'night': tone(220,t0,1.2,'sine',0.08);tone(330,t0+0.15,1.2,'sine',0.06);tone(440,t0+0.3,1.4,'sine',0.05);break; // 夜の始まり：柔らかい和音
+    case 'goal': [523,659,784,1047,1319].forEach((f,i)=>tone(f,t0+i*0.09,0.6,'triangle',0.12));[784,1047,1319].forEach((f,i)=>tone(f,t0+0.6+i*0.05,0.9,'sine',0.08));break; // 目標達成：ファンファーレ
+    case 'unlock': tone(660,t0,0.2,'sine',0.1);tone(990,t0+0.12,0.35,'sine',0.1);break;
+    case 'tick': tone(1200,t0,0.05,'square',0.03);break;
+  }
+}
+function setMute(m){muted=m;$('mute').textContent=m?'🔇':'🔊';$('mute').setAttribute('aria-pressed',m?'true':'false');try{localStorage.setItem('hoshiyomi.mute',m?'1':'0');}catch(e){}}
+// =====================================================================
 // 状態
 // =====================================================================
 const LAT=35.7;
@@ -1264,7 +1304,7 @@ const SEASON_NAMES=['春','夏','秋','冬'];
 const TAP_R=22;                                 // 星のタップ半径(px)
 const BASE_LIMIT=6.0;                           // 月が無い夜の限界等級
 const OP_TABLE={1:1,2:2,3:4,4:8};
-const GOALS=[100,150,200];
+const GOALS=[75,110,140];
 const TARGETS_R1=['Ori','WinterTri','Tau','BigDipper','Leo','SpringTri','Sco','SummerTri','Cyg','Cas','Peg','And'];
 const UNLOCK_QUEUE=['CMa','Gem','Lyr','Ari','Aql','Cnc','Boo','Lib','Aur','Cap','Sgr','Aqr','Per','Psc','Vir','UMi','Lep','Her'];
 const ZODIAC=['Ari','Tau','Gem','Cnc','Leo','Vir','Lib','Sco','Sgr','Cap','Aqr','Psc'];
@@ -1273,6 +1313,7 @@ const PLAYABLE=[...TARGETS_R1,...UNLOCK_QUEUE];
 const UNLOCK_EVERY=2;                            // 完成2つごとに手札が増える
 const TONIGHT_N=5;                               // 今夜の目標の数
 const QUEST_BONUS=3;
+const METEOR_CAP=12;                             // 流れ星で稼げる 1 夜の上限
 const SHOWERS=[[2,'しぶんぎ座流星群'],[221,'ペルセウス座流星群'],[343,'ふたご座流星群']]; // day index
 const NAMED=[[101.29,-16.72,'シリウス'],[88.79,7.41,'ベテルギウス'],[78.63,-8.20,'リゲル'],[114.83,5.22,'プロキオン'],[79.17,46.0,'カペラ'],[68.98,16.51,'アルデバラン'],[116.33,28.03,'ポルックス'],[113.65,31.89,'カストル'],[152.09,11.97,'レグルス'],[201.30,-11.16,'スピカ'],[213.92,19.18,'アークトゥルス'],[279.23,38.78,'ベガ'],[310.36,45.28,'デネブ'],[297.70,8.87,'アルタイル'],[247.35,-26.43,'アンタレス'],[344.41,-29.62,'フォーマルハウト'],[37.95,89.26,'北極星'],[177.26,14.57,'デネボラ'],[165.93,61.75,'ドゥーベ'],[206.89,49.31,'アルカイド'],[200.98,54.93,'ミザール'],[2.10,29.09,'アルフェラッツ'],[10.90,-17.99,'ディフダ'],[51.08,49.86,'ミルファク'],[95.99,-52.70,'カノープス']];
 const NAME_OF={};for(const [ra,dec,nm] of NAMED){let b=-1,bd=9;for(let i=0;i<STARS.length;i++){const d=Math.hypot((STARS[i][0]-ra)*Math.cos(dec*D2R),STARS[i][1]-dec);if(d<bd){bd=d;b=i;}}if(bd<0.4)NAME_OF[b]=nm;}
@@ -1343,7 +1384,9 @@ function lerpColor(a,b,t){const pa=[1,3,5].map(i=>parseInt(a.substr(i,2),16)),pb
 
 let SCREEN=[]; // 画面上の星 [{i,x,y}]（タップ判定用）
 let fading=[]; // 消えていく誤タップ
-let ripples=[]; // タップ位置の波紋 {x,y,until} [{a,b,until}]
+let ripples=[]; // タップ位置の波紋 {x,y,until}
+let sparks=[]; // 完成時の粒子 {x,y,vx,vy,born,life}
+function burst(c){const now=performance.now();for(const i of c.stars){const p=HORIZ[i];if(!p||p.alt<0)continue;const q=project(p.az,p.alt);if(!q)continue;for(let k=0;k<7;k++){const a=Math.random()*Math.PI*2,v=30+Math.random()*70;sparks.push({x:q.x,y:q.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-20,born:now,life:700+Math.random()*500});}}}
 function draw(now){
   const S=skyNow(); computeHoriz(S.lst);
   const t=S.tw;
@@ -1376,6 +1419,9 @@ function draw(now){
     const g=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,11);g.addColorStop(0,'rgba(255,215,122,.9)');g.addColorStop(.35,'rgba(255,215,122,.45)');g.addColorStop(1,'rgba(255,215,122,0)');
     ctx.fillStyle=g;ctx.beginPath();ctx.arc(q.x,q.y,11,0,Math.PI*2);ctx.fill();
     ctx.strokeStyle=done?'rgba(255,215,122,1)':'rgba(255,215,122,.85)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(q.x,q.y,5.5,0,Math.PI*2);ctx.stroke();}
+  // 完成の粒子
+  sparks=sparks.filter(s=>now-s.born<s.life);
+  for(const s of sparks){const a=(now-s.born)/1000,k=1-(now-s.born)/s.life;const x=s.x+s.vx*a,y=s.y+s.vy*a+40*a*a;ctx.fillStyle=`rgba(255,215,122,${(k*.9).toFixed(2)})`;ctx.beginPath();ctx.arc(x,y,1.2+k*1.6,0,Math.PI*2);ctx.fill();}
   // タップ位置の波紋
   ripples=ripples.filter(r=>r.until>now);
   for(const r of ripples){const k=Math.max(0,Math.min(1,(r.until-now)/350));ctx.strokeStyle=`rgba(216,219,239,${(k*.7).toFixed(2)})`;ctx.lineWidth=1;ctx.beginPath();ctx.arc(r.x,r.y,4+(1-k)*14,0,Math.PI*2);ctx.stroke();
@@ -1433,8 +1479,9 @@ function resizeOrbit(){}
 const NIGHT_LEN=NIGHT_END-NIGHT_START;
 function pct(min){return Math.max(0,Math.min(100,(min-NIGHT_START)/NIGHT_LEN*100));}
 // 今夜の観測ノート：カードごとのタイムライン。ヒント（方角・時刻）はやさしい／ふつうのみ
+function hintsOn(){if(game.practice)return true;if(game.diff===0)return true;if(game.diff===1)return game.night<=2;return false;}
 function renderNote(){
-  const box=$('nrows');box.innerHTML='';const hints=game.diff<2||!!game.practice;
+  const box=$('nrows');box.innerHTML='';const hints=hintsOn();
   for(const c of game.targets){const row=document.createElement('div');row.className='nrow';row.dataset.id=c.id;
     const cv=document.createElement('canvas');row.appendChild(cv);
     const nn=document.createElement('div');nn.className='nn';nn.innerHTML=`${c.name}<small>${'★'.repeat(c.cls)}</small>`;row.appendChild(nn);
@@ -1523,10 +1570,12 @@ function tapStar(i){
   const cid=starOwner.get(i);
   if(cid&&!game.doneTonight.has(cid)){
     if(game.drawn.has(i))return;               // もう点いている
-    game.drawn.add(i);
+    game.drawn.add(i);game.missStreak=0;sfx('hit');
     if(!(cid in game.firstLineMiss))game.firstLineMiss[cid]=game.misses;
     const c=byId[cid];if([...reqSet.get(cid)].every(s=>game.drawn.has(s))){for(const s of c.stars)game.drawn.add(s);complete(c);}
-  }else{fading.push({i,until:performance.now()+450});game.misses++;}
+  }else{fading.push({i,until:performance.now()+450});game.misses++;game.missStreak=(game.missStreak||0)+1;sfx('miss');
+    if(game.missStreak>=2){game.lockUntil=performance.now()+700;toast('','');}
+  }
   updateCards();
 }
 function complete(c){
@@ -1546,14 +1595,14 @@ function complete(c){
   game.totalDone++;
   game.op+=op;game.countSeason[c.id]=(game.countSeason[c.id]||0)+1;
   if(!dex.found.includes(c.id)){dex.found.push(c.id);saveDex();}
-  const wrap=$('skywrap');wrap.classList.remove('flash');void wrap.offsetWidth;wrap.classList.add('flash');
+  const wrap=$('skywrap');wrap.classList.remove('flash');void wrap.offsetWidth;wrap.classList.add('flash');sfx('complete');burst(c);
   toast(`${c.name}`,`+${op} pt${bonus.length?'　'+bonus.join('　'):''}`);
   renderStatus();
   if(game.totalDone%UNLOCK_EVERY===0)setTimeout(unlockNext,1800);
 }
 function unlockNext(){
   if(game.unlocked>=UNLOCK_QUEUE.length)return;const c=byId[UNLOCK_QUEUE[game.unlocked++]];
-  game.pool.push(c);
+  game.pool.push(c);sfx('unlock');
   toast('新しい形',`${c.name} が手札に加わった（明日から出る）`);
 }
 let toastTimer=0;
@@ -1574,7 +1623,7 @@ function renderStatus(){$('hdrNight').textContent=`${SEASON_NAMES[game.seasonIdx
     if(!game.reached&&game.op>=goal&&game.running){game.reached=true;celebrateGoal();}}}
 // 目標達成の瞬間：金のフラッシュ＋幕。残りの夜はスコアを伸ばす
 function celebrateGoal(){
-  const wrap=$('skywrap');wrap.classList.remove('goldflash');void wrap.offsetWidth;wrap.classList.add('goldflash');
+  const wrap=$('skywrap');wrap.classList.remove('goldflash');void wrap.offsetWidth;wrap.classList.add('goldflash');sfx('goal');
   $('goalVeilSub').textContent=`${GOALS[game.diff]} pt に届いた。残りの夜はスコアを伸ばそう`;
   const v=$('goalVeil');v.classList.add('on');setTimeout(()=>v.classList.remove('on'),2600);
 }
@@ -1588,11 +1637,12 @@ function startSeason(diff){
 function startNight(){
   game.seasonIdx=(game.startSeason+game.night-1)%4;state.day=SEASON_DAYS[game.seasonIdx];state.minute=NIGHT_START;game.moonShift=Math.random()*SYNODIC;
   game.drawn.clear();game.pending=-1;game.doneTonight.clear();fading=[];setZoom(1);
-  game.firstLineMiss={};game.meteors=[];game.label=null;
+  game.firstLineMiss={};game.meteors=[];game.label=null;game.meteorTonight=0;game.missStreak=0;game.lockUntil=0;game.nightStartOp=game.op;game.nightMisses=game.misses;
   game.shower=null;for(const [d,nm] of SHOWERS){let dd=Math.abs(state.day-d);dd=Math.min(dd,360-dd);if(dd<=5)game.shower=nm;}
   pickTonight();makeClouds();makeQuest();saveGame();
   updateCards();renderStatus();
   const md=dayToMD(state.day);const goal=GOALS[game.diff];
+  sfx('night');
   veil(`${SEASON_NAMES[game.seasonIdx]}の夜`,`${md.m}月${md.d}日${game.shower?'　'+game.shower+'の夜':''}${game.night===1?(game.mode==='score'?'　／　スコアアタック：4 夜でどこまで稼げるか':`　／　春夏秋冬の 4 夜で ${goal} pt を集めれば達成`):''}`,game.night===1?1700:900,()=>{game.running=true;game.lastMs=performance.now();});
 }
 // 雲：0〜4個。方位角方向に流れる
@@ -1670,8 +1720,30 @@ function makeQuest(){
 }
 function endNight(){
   game.running=false;
-  if(game.night>=NIGHTS){showResult();return;}
-  game.night++;startNight();
+  showRecap(()=>{if(game.night>=NIGHTS){showResult();return;}game.night++;startNight();});
+}
+// 夜の終わり：成績と、今夜の条件に合わせた知識をひとつ
+function nightTip(){
+  const {m,d}=dayToMD(state.day);const moon=moonState(m,d);const season=SEASON_NAMES[game.seasonIdx];
+  const done=[...game.doneTonight].map(id=>byId[id]);const missed=game.targets.filter(c=>!game.doneTonight.has(c.id));
+  const tips=[];
+  if(moon.illum>=0.8)tips.push(`今夜は月齢 <b>${moon.age.toFixed(0)}</b>、ほぼ満月だった。月が出ていると <b>${(BASE_LIMIT-2.5*moon.illum).toFixed(1)}等</b> より暗い星は見えない。暗い星座は<b>新月に近い夜</b>に狙うと見つけやすい`);
+  if(moon.illum<=0.15)tips.push(`今夜は月齢 <b>${moon.age.toFixed(0)}</b>、新月に近い暗い夜だった。こういう夜は暗い星まで見えるので、<b>★★★の星座を狙うチャンス</b>`);
+  if(game.shower)tips.push(`今夜は<b>${game.shower}</b>の夜。流星群は毎年同じ日付に来る（しぶんぎ座 1/3・ペルセウス座 8/12・ふたご座 12/14）。暦を知っていれば流れ星を待ち構えられる`);
+  for(const c of missed){const v=visibilityTonight(c);if(!v)continue;tips.push(`<b>${c.name}</b>は今夜 <b>${fmtTime(v.firstOK)}</b> ごろ <b>${dirName(v.first.az)}</b>の${altWord(v.first.alt)}に出ていた。${seasonOf(c)}なので、この季節は<b>${dirName(v.best.az)}</b>を探すと見つかる`);}
+  for(const c of done){const v=visibilityTonight(c);if(!v)continue;const stars=c.stars.filter(i=>NAME_OF[i]).map(i=>NAME_OF[i]);tips.push(`<b>${c.name}</b>の目印は<b>${stars.length?stars.join('・'):'いちばん明るい星'}</b>。星は<b>1 時間に 15°</b> 東から西へ動くので、${fmtTime(v.firstOK)} に${dirName(v.first.az)}にあったものは 2 時間後には 30° 西にいる`);}
+  tips.push(`同じ星座でも、<b>1 か月たつと同じ時刻に 30° 西</b>にずれる。だから ${season} の星座は次の季節には夕方の西に沈んでしまう`);
+  tips.push(`<b>北極星</b>だけは一晩中ほとんど動かない。北の空の星座（カシオペヤ・北斗七星）は北極星のまわりを回っていて、一年中どこかに見える`);
+  tips.push(`東京から見て<b>南の低い空</b>にしか出ない星座（さそり・いて）は、南中する時刻の前後 2〜3 時間しか見えない。時刻を外すと地平線の下にいる`);
+  return tips[Math.floor(Math.random()*Math.min(tips.length,4))];
+}
+function showRecap(cb){
+  const found=game.doneTonight.size,total=game.targets.length,gain=game.op-(game.nightStartOp||0),miss=game.misses-(game.nightMisses||0);
+  $('recapTitle').textContent=`${SEASON_NAMES[game.seasonIdx]}の夜 おわり`;
+  $('recapStats').innerHTML=`<div class="st"><b>${found} / ${total}</b><span>見つけた星座</span></div><div class="st"><b>+${gain}</b><span>今夜の pt</span></div><div class="st"><b>${miss}</b><span>違う星を押した回数</span></div><div class="st"><b>${game.meteorTonight||0}</b><span>流れ星</span></div>`;
+  $('recapTip').innerHTML=nightTip();
+  const box=$('recap');box.hidden=false;$('recapNext').textContent=game.night>=NIGHTS?'結果を見る':'次の夜へ';
+  $('recapNext').onclick=()=>{box.hidden=true;cb();};
 }
 function veil(t,s,ms,cb){const v=$('veil');$('veilTitle').textContent=t;$('veilSub').textContent=s;v.classList.add('on');setTimeout(()=>{cb&&cb();v.classList.remove('on');},ms);}
 function confetti(){
@@ -1731,7 +1803,8 @@ wrap.addEventListener('pointerup',e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pi
   if(drag&&drag.id===e.pointerId&&!drag.moved){const r=wrap.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;
     const now=performance.now();let hit=null;
     for(const mt of game.meteors){if(mt.hit)continue;const a=(now-mt.born)/mt.life;const hx=mt.x0+mt.dx*a,hy=mt.y0+mt.dy*a;if(Math.hypot(hx-x,hy-y)<48){hit=mt;break;}}
-    if(hit){hit.hit=true;hit.life=Math.max(hit.life,now-hit.born+350);game.op+=1;game.meteorsHit++;renderStatus();toast('流れ星','+1 pt');}
+    if(hit){hit.hit=true;hit.life=Math.max(hit.life,now-hit.born+350);sfx('meteor');if((game.meteorTonight||0)<METEOR_CAP){game.op+=1;game.meteorsHit++;game.meteorTonight=(game.meteorTonight||0)+1;renderStatus();toast('流れ星',`+1 pt${game.meteorTonight>=METEOR_CAP?'　今夜はここまで':''}`);}else toast('流れ星','今夜の流れ星はもう数えない');}
+    else if(game.lockUntil&&now<game.lockUntil){/* 硬直中：連続ミスの後は少し待つ */}
     else{ripples.push({x,y,until:now+350});const i=nearestStar(x,y);if(i>=0)tapStar(i);}}
   if(drag&&drag.id===e.pointerId)drag=null;});
 wrap.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);pinch=null;drag=null;});
@@ -1746,7 +1819,7 @@ function renderHints(focusId){
   const box=$('tonightHints');box.innerHTML='';
   for(const c of game.targets){const row=document.createElement('div');row.className='hintRow'+(c.id===focusId?' focus':'');
     const cv=document.createElement('canvas');row.appendChild(cv);
-    const d=document.createElement('div');d.innerHTML=`<div class="hn">${c.name}　<span style="color:var(--accent)">${'★'.repeat(c.cls)}</span></div><div class="ht">${hintText(c)}</div>`;row.appendChild(d);
+    const d=document.createElement('div');d.innerHTML=`<div class="hn">${c.name}　<span style="color:var(--accent)">${'★'.repeat(c.cls)}</span></div><div class="ht">${hintsOn()?hintText(c):seasonOf(c)+'。今夜どこに出るかは自分で読む（星座図鑑に見ごろがある）'}</div>`;row.appendChild(d);
     box.appendChild(row);drawCardShape(cv,c,0);}
 }
 function openPause(focusId,title){
@@ -1757,6 +1830,7 @@ function openPause(focusId,title){
 }
 function closePause(){game.paused=false;game.lastMs=performance.now();$('pausePanel').hidden=true;}
 $('pause').addEventListener('click',()=>{if(game.practice)return;game.paused?closePause():openPause(null);});
+$('mute').addEventListener('click',()=>setMute(!muted));setMute(muted);
 $('resume').addEventListener('click',closePause);
 $('cards').addEventListener('click',e=>{if(game.practice)return;const el=e.target.closest('.card');if(!el)return;openPause(el.dataset.id,'今夜のヒント');});
 $('abort').addEventListener('click',()=>{game.paused=false;game.running=false;$('pausePanel').hidden=true;$('title').hidden=false;refreshTitle();});
@@ -1822,7 +1896,7 @@ $('pickList').addEventListener('click',e=>{const el=e.target.closest('.gcard');i
 $('pickClose').addEventListener('click',()=>{$('pick').hidden=true;if(!game.practice&&!game.running)$('title').hidden=false;});
 $('titlePractice').addEventListener('click',()=>{$('title').hidden=true;openPick();});
 function setMode(m){game.mode=m;$('modeClear').classList.toggle('on',m==='clear');$('modeScore').classList.toggle('on',m==='score');
-  const subs=['目印の星 1 つ','明るい星 2〜4 つ','全部の星・ヒントなし'];
+  const subs=['目印の星 1 つ・ヒントあり','明るい星 2〜4 つ・ヒントは 2 夜目まで','全部の星・ヒントなし'];
   for(let i=0;i<3;i++){$('dsub'+i).textContent=m==='score'?`${subs[i]}${best['s'+i]?'・ベスト '+best['s'+i]+' pt':''}`:`${subs[i]}・4 夜で ${GOALS[i]} pt`;}}
 $('modeClear').addEventListener('click',()=>setMode('clear'));$('modeScore').addEventListener('click',()=>setMode('score'));
 $('openPractice').addEventListener('click',()=>{openPick();});
