@@ -73,6 +73,16 @@
     <div class="arrow">›</div>
   </a>
 
+  <a class="game" href="./tomo.html" data-key="tomo">
+    <div class="ic">💡</div>
+    <div>
+      <b>トモシビ</b>
+      <span>ひとつの電池に、部品をどこまでつなげるか。直列と並列で遊ぶ「ともす」と、答えてから通電して針で確かめる計算モード「はかる」。</span>
+      <div class="tags"><i class="tag">中2理科</i><i class="tag">電流・回路</i><i class="tag cont" hidden>つづきあり</i></div>
+    </div>
+    <div class="arrow">›</div>
+  </a>
+
   <footer>記録はこの端末のブラウザに保存されます。</footer>
 </main>
 <script>
@@ -83,6 +93,7 @@
     hoshiyomi: () => localStorage.getItem('hoshiyomi.save'),
     suika: () => localStorage.getItem('uchu.suika.save'),
     zouki: () => ['normal','hard'].some(k => { const r = localStorage.getItem('zouki_sp_save_' + k); if (!r) return false; const d = JSON.parse(r); return d && d.g && !d.g.over; }),
+    tomo: () => localStorage.getItem('uchu.tomo.resume'),
     shokubutsu: () => ['normal','hard'].some(k => { const r = localStorage.getItem('uchu.plant.save.' + k); if (!r) return false; const d = JSON.parse(r); return d && d.g && !d.g.over; }),
   };
   for (const a of document.querySelectorAll('a.game')) {
