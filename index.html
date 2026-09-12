@@ -83,6 +83,16 @@
     <div class="arrow">›</div>
   </a>
 
+  <a class="game" href="./buku.html" data-key="buku">
+    <div class="ic">🫧</div>
+    <div>
+      <b>ブクブク商店</b>
+      <span>酸素・二酸化炭素・水素・アンモニア。実験の図を見て答えると、実験が動いて確かめられる。発生・集め方・確かめ方をステージで。</span>
+      <div class="tags"><i class="tag">中1理科</i><i class="tag">気体</i><i class="tag cont" hidden>つづきあり</i></div>
+    </div>
+    <div class="arrow">›</div>
+  </a>
+
   <footer>記録はこの端末のブラウザに保存されます。</footer>
 </main>
 <script>
@@ -94,6 +104,7 @@
     suika: () => localStorage.getItem('uchu.suika.save'),
     zouki: () => ['normal','hard'].some(k => { const r = localStorage.getItem('zouki_sp_save_' + k); if (!r) return false; const d = JSON.parse(r); return d && d.g && !d.g.over; }),
     tomo: () => localStorage.getItem('uchu.tomo.resume'),
+    buku: () => localStorage.getItem('uchu.buku.resume'),
     shokubutsu: () => ['normal','hard'].some(k => { const r = localStorage.getItem('uchu.plant.save.' + k); if (!r) return false; const d = JSON.parse(r); return d && d.g && !d.g.over; }),
   };
   for (const a of document.querySelectorAll('a.game')) {
