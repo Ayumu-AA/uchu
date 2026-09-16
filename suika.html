@@ -605,7 +605,12 @@
     document.removeEventListener('visibilitychange', onHide); window.removeEventListener('pagehide', onHide);
     state.root.innerHTML = ''; state = null;
   }
-  function restart(fresh) { const s = state; const r = s.root, o = { onExit: s.onExit, fresh: !!fresh }; unmount(); mount(r, o); }
+  // 作り直しても homeUrl と rank を引き継ぐ（引き継がないと ⌂ と 🏆 が消える）
+  function restart(fresh) {
+    const s = state;
+    const r = s.root, o = { onExit: s.onExit, fresh: !!fresh, homeUrl: s.homeUrl, rank: s.rankOn };
+    unmount(); mount(r, o);
+  }
 
   function el(tag, cls) { const e = document.createElement(tag); if (cls) e.className = cls; return e; }
   function randTier() { return Math.floor(Math.random() * 4); } // 月・水星・火星・金星
