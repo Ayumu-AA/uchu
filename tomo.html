@@ -118,6 +118,7 @@ html,body{margin:0;padding:0;background:#0b1020;color:#e8ecf4;font-family:"Hirag
 .tm-calcfoot button{flex:1;height:30px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#e8ecf4;font-size:12px;cursor:pointer}
 .tm-resumebtn{border-color:#8fe3a1;background:rgba(143,227,161,.12)}
 .tm-resumebtn b{color:#8fe3a1}
+.tm-seqnote{font-size:11px;color:#9aa3b5;margin-top:4px}
 </style></head><body>
 <div id="app"></div>
 <script>window.TOMO_IMAGES = {
@@ -1104,15 +1105,19 @@ html,body{margin:0;padding:0;background:#0b1020;color:#e8ecf4;font-family:"Hirag
       resultShown = true; state = 'result'; audio.bgmStop();
       const n = game.score, isBest = n > best;
       if (isBest) { best = n; ls.set(bestKey(), String(best)); elBest.textContent = best; }
-      $('.tm-rnum').textContent = n;
-      $('.tm-rbest').textContent = isBest ? '🎉 ベスト更新！' : `ベスト ${best}`;
+      $('.tm-result .tm-rnum').textContent = n;
+      $('.tm-result .tm-rbest').textContent = isBest ? '🎉 ベスト更新！' : `ベスト ${best}`;
       const c = D.causes[game.cause] || D.causes.dark;
-      $('.tm-ctitle').textContent = c.title; $('.tm-ctext').textContent = c.text;
-      $('.tm-cause').classList.toggle('good', game.cause === 'full');
+      $('.tm-result .tm-ctitle').textContent = c.title; $('.tm-result .tm-ctext').textContent = c.text;
+      $('.tm-result .tm-cause').classList.toggle('good', game.cause === 'full');
       const cc = game.circuit;
       const key = d => d.type.id === 'bulb' ? (d.state === 'burn' ? 'bulb_burnt' : 'bulb_on') : d.type.id === 'led' ? (d.state === 'burn' ? 'led_burnt' : 'led_on') : d.type.id;
-      $('.tm-seq').innerHTML = `<span class="tm-seqlabel">電池 ${cc.battery.series}本直列 × ${cc.battery.parallel}並列　枝 ${cc.branches.length}本</span>` +
-        cc.branches.map(b => '<div class="tm-branch">' + b.devices.map(d => IMG[key(d)] ? `<img class="${d.state !== 'off' ? 'bad' : ''}" src="${IMG[key(d)]}" alt="${d.type.name}">` : d.type.name).join('<span class="tm-wire"></span>') + '</div>').join('');
+      // 数に入らなかった機器（壊れた／消えた機器と、最後に置いた機器）はうすく出す
+      const failed = game.cause !== 'full';
+      const counted = d => d.state === 'off' && !(failed && d === game.lastPlaced);
+      $('.tm-result .tm-seq').innerHTML = `<span class="tm-seqlabel">電池 ${cc.battery.series}本直列 × ${cc.battery.parallel}並列　枝 ${cc.branches.length}本</span>` +
+        cc.branches.map(b => '<div class="tm-branch">' + b.devices.map(d => IMG[key(d)] ? `<img class="${counted(d) ? '' : 'bad'}" src="${IMG[key(d)]}" alt="${d.type.name}">` : d.type.name).join('<span class="tm-wire"></span>') + '</div>').join('') +
+        (failed ? '<span class="tm-seqnote">うすい部品は、ともらなかったので数に入りません</span>' : '');
       ovResult.hidden = false;
       if (isBest) setTimeout(() => audio.best(), 200);
     }
@@ -1166,7 +1171,9 @@ html,body{margin:0;padding:0;background:#0b1020;color:#e8ecf4;font-family:"Hirag
       if (!game) return;
       // 明るさの追従
       const target = new Map();
-      if (game.circuit.solved) for (const d of game.circuit.allDevices()) target.set(d.uid, d.state === 'off' ? E.Circuit.level(d) : 0);
+      // ヒューズが飛んだ（電池が限界）＝回路が切れるので、全部消える
+      const blown = game.over && (game.cause === 'fuse' || game.cause === 'motor_fuse');
+      if (game.circuit.solved) for (const d of game.circuit.allDevices()) target.set(d.uid, (blown || d.state !== 'off') ? 0 : E.Circuit.level(d));
       for (const [uid, tv] of target) {
         const cur = levels.has(uid) ? levels.get(uid) : 0;
         const rate = state === 'power' ? 1.6 : 4;
@@ -1175,7 +1182,7 @@ html,body{margin:0;padding:0;background:#0b1020;color:#e8ecf4;font-family:"Hirag
       // 羽
       for (const d of game.circuit.allDevices()) if (d.type.id === 'motor') {
         const lv = levels.get(d.uid) || 0; const a = propAngle.get(d.uid) || 0;
-        propAngle.set(d.uid, a + dt * (0.5 + lv * 14) * (d.state === 'off' ? 1 : 0));
+        propAngle.set(d.uid, a + dt * (0.5 + lv * 14) * (d.state === 'off' && !blown ? 1 : 0));
       }
       // 針（ばね）
       const targetI = (state === 'power' || state === 'fail' || state === 'result' || state === 'offer') && game.circuit.solved ? game.circuit.I : 0;
@@ -1274,7 +1281,10 @@ html,body{margin:0;padding:0;background:#0b1020;color:#e8ecf4;font-family:"Hirag
       ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(0, L.trayTop, W, 1);
       if (mode === 'hakaru') { if (hk) drawHakaru(); return; }
       if (!game) return;
-      const c = game.circuit, powered = c.solved;
+      const c = game.circuit;
+      // ヒューズが飛んだら電流は流れない（粒を止める）
+      const blownNow = game.over && (game.cause === 'fuse' || game.cause === 'motor_fuse');
+      const powered = c.solved && !blownNow;
       const nB = c.branches.length;
       const lastY = nB ? branchY(nB - 1) : L.busY;
 
@@ -1348,7 +1358,7 @@ html,body{margin:0;padding:0;background:#0b1020;color:#e8ecf4;font-family:"Hirag
         const r = game.fail;
         ctx.fillStyle = 'rgba(255,90,70,0.95)'; ctx.font = 'bold 16px system-ui, sans-serif'; ctx.textAlign = 'center';
         if (r.dev) { const p = devPos(r.dev); ctx.fillText(r.kind === 'burn' ? '✕ 切れた' : '✕ 消えた', p.x, p.y - L.spr * 0.55); }
-        else ctx.fillText('✕ 電池が限界', L.meterX + L.meterS / 2, L.meterY + L.meterS + 16);
+        else ctx.fillText('✕ ヒューズが飛んだ', L.meterX + L.meterS / 2, L.meterY + L.meterS + 30);
       }
       if (state === 'fail' && game.cause === 'full') {
         ctx.fillStyle = '#8fe3a1'; ctx.font = 'bold 20px system-ui, sans-serif'; ctx.textAlign = 'center';
@@ -1392,7 +1402,7 @@ html,body{margin:0;padding:0;background:#0b1020;color:#e8ecf4;font-family:"Hirag
       ctx.fillStyle = '#ffd166'; ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
       ctx.fillStyle = blink ? '#ff8a7a' : 'rgba(255,255,255,0.75)'; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(hot ? '⚠ 限界が近い' : '電流計', cx, cy + s / 2 + 12);
+      ctx.fillText(hot && !(game && game.over) ? '⚠ 限界が近い' : '電流計', cx, cy + s / 2 + 12);
     }
     function drawTray() {
       hitTray = [];
