@@ -283,6 +283,8 @@
     items: 'uchu.suika.items',
     save: 'uchu.suika.save',
     name: 'uchu.name',                      // ランキングに出す名前（全ゲーム共通）
+    autopost: 'uchu.autopost',              // ゲーム終了時に自動で送るか（'0' で切る）
+    pending: 'uchu.suika.pending',          // 送れなかった記録。次の機会に送り直す
   };
 
   // ---------------- ランキング（Supabase） ----------------
@@ -295,6 +297,21 @@
     timeout: 8000,
   };
   const NAME_RE = /^[0-9A-Za-zぁ-んァ-ヴー一-龥・ 　]{1,12}$/;
+  // 最初から名前が付いている状態にする。4桁つけて他の人とかぶりにくくする
+  const NAME_WORDS = ['ほし', 'つき', 'たいよう', 'すいせい', 'きんせい', 'ちきゅう', 'かせい', 'もくせい', 'どせい',
+    'ぎんが', 'りゅうせい', 'こうせい', 'うちゅう', 'ひかり', 'よぞら', 'あけぼの', 'きらり', 'ながれぼし',
+    'オリオン', 'スバル', 'ベガ', 'シリウス', 'アルタイル', 'デネブ', 'ポラリス', 'アンタレス', 'カノープス', 'リゲル'];
+  function autoName() {
+    const w = NAME_WORDS[Math.floor(Math.random() * NAME_WORDS.length)];
+    return w + (1000 + Math.floor(Math.random() * 9000));
+  }
+  // いまの名前。まだ無ければその場で作って覚える
+  function playerName() {
+    let n = (store.get(K.name, '') || '').trim();
+    if (!NAME_RE.test(n)) { n = autoName(); store.set(K.name, n); }
+    return n;
+  }
+  function autoPostOn() { return store.get(K.autopost, '1') !== '0'; }
   const RankApi = {
     head(extra) { return Object.assign({ apikey: RANK.key, Authorization: 'Bearer ' + RANK.key, 'Content-Type': 'application/json' }, extra || {}); },
     async call(path, opts) {
@@ -376,8 +393,13 @@
   .sn-card i{display:block;width:44px;height:44px;border-radius:50%;flex:none}
   .sn-card b{display:block;font-size:17px;color:#fff3cf;letter-spacing:.04em}
   .sn-card span{display:block;font-size:11px;color:#aab2cc;line-height:1.5}
-  .sn-over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
-    background:rgba(7,10,20,.82);border-radius:6px;text-align:center;padding:22px;box-sizing:border-box}
+  .sn-over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;
+    background:rgba(7,10,20,.82);border-radius:6px;text-align:center;padding:18px;box-sizing:border-box;overflow-y:auto}
+  /* 中身が入りきるときは中央、あふれたらスクロール */
+  .sn-over>*:first-child{margin-top:auto}
+  .sn-over>*:last-child{margin-bottom:auto}
+  .sn-over .btnrow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .sn-over .btnrow .sn-btn{margin-top:0}
   .sn-over h2{margin:0;font-size:22px;font-weight:700;letter-spacing:.06em}
   .sn-over p{margin:0;color:#aab2cc;font-size:14px;line-height:1.7}
   .sn-over .bests{display:flex;gap:18px;justify-content:center;font-size:12px;color:#aab2cc}
@@ -420,6 +442,23 @@
   .sn-send .sn-btn{margin-top:0;padding:10px 18px;font-size:13px}
   .sn-note{font-size:10.5px;color:#8d96b3;margin-top:2px;line-height:1.6}
   .sn-note.ng{color:#ff9a6e}
+  .sn-note.ok{color:#8fe6a8}
+  .sn-post{margin-top:2px;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .sn-post .who{font-size:13px;color:#e9edf7}
+  .sn-post .who b{color:#fff3cf}
+  .sn-post .rank{font-size:15px;color:#fff3cf;font-weight:700}
+  .sn-mini{background:transparent;border:1px solid rgba(233,237,247,.22);border-radius:999px;color:#aab2cc;font-family:inherit;font-size:11px;padding:5px 12px;cursor:pointer}
+  .sn-mini:focus-visible{outline:2px solid #ffb42a;outline-offset:2px}
+  .sn-rhead{display:flex;align-items:center;justify-content:center;gap:8px;font-size:11.5px;color:#8d96b3;flex-wrap:wrap}
+  .sn-rhead b{color:#fff3cf;font-size:13px}
+  .sn-setbox{position:absolute;inset:0;background:rgba(7,10,20,.96);border-radius:6px;padding:14px;box-sizing:border-box;overflow-y:auto;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center}
+  .sn-setbox h3{margin:0;font-size:15px;letter-spacing:.06em;color:#fff3cf}
+  .sn-setbox .lbl{font-size:11.5px;color:#8d96b3}
+  .sn-setbox .toggle{display:flex;align-items:center;gap:10px;border:1px solid rgba(233,237,247,.16);border-radius:12px;padding:10px 14px;font-size:12.5px;color:#e9edf7;cursor:pointer;max-width:19em;line-height:1.5}
+  .sn-setbox .toggle i{width:38px;height:22px;border-radius:999px;background:rgba(233,237,247,.18);position:relative;flex:none;transition:background .15s}
+  .sn-setbox .toggle i::after{content:'';position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#e9edf7;transition:left .15s}
+  .sn-setbox .toggle.on i{background:#ffb42a}
+  .sn-setbox .toggle.on i::after{left:19px}
   .sn-home{position:absolute;left:48px;top:8px;width:34px;height:34px;border-radius:50%;border:1px solid rgba(233,237,247,.18);background:rgba(7,10,20,.55);color:#aab2cc;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
   .sn-home:focus-visible{outline:2px solid #ffb42a;outline-offset:2px}
   .sn-over .sub{font-size:11.5px;color:#aab2cc;margin-top:6px}
@@ -580,7 +619,7 @@
       items: loadItems(), earned: new Set(), itemsUsed: 0, telescope: false, chain: 0,
       armed: null, toastTimer: 0, itemEls: {}, saveTimer: 0,
       pauseOpen: false, pauseBox: null, resumeOpen: false, helpOpen: false, homeUrl,
-      rankOn, rankOpen: false, posted: false,
+      rankOn, rankOpen: false, setOpen: false, posted: false,
     };
     state.held = { tier: state.queue.shift() }; state.queue.push(randTier());
     buildItemBar();
@@ -591,6 +630,8 @@
     window.addEventListener('keydown', onKey);
     document.addEventListener('visibilitychange', onHide); window.addEventListener('pagehide', onHide);
     state.lastT = performance.now(); state.raf = requestAnimationFrame(loop);
+
+    if (rankOn) { playerName(); setTimeout(flushPending, 1200); }
 
     // 中断データがあれば「続きから／最初から」
     const saved = readSave();
@@ -660,9 +701,9 @@
   }
 
   // ---------------- 一時停止 ----------------
-  function togglePause() { const s = state; if (!s || s.rankOpen) return; if (s.pauseOpen) resumeGame(); else pauseGame(); }
+  function togglePause() { const s = state; if (!s || s.rankOpen || s.setOpen) return; if (s.pauseOpen) resumeGame(); else pauseGame(); }
   function pauseGame() {
-    const s = state; if (!s || s.over || s.helpOpen || s.pauseOpen || s.resumeOpen || s.rankOpen) return;
+    const s = state; if (!s || s.over || s.helpOpen || s.pauseOpen || s.resumeOpen || s.rankOpen || s.setOpen) return;
     s.pauseOpen = true; s.paused = true; s.pressing = false; disarm();
     if (s.armedNeutron) { s.armedNeutron = null; s.mode.hidden = true; }
     writeSave();
@@ -678,7 +719,12 @@
       clearSave(); restart(true);
     };
     const extra = [];
-    if (s.rankOn) { const b0 = el('button', 'sn-btn ghost'); b0.textContent = '🏆 ランキング'; b0.onclick = () => showRank(); extra.push(b0); }
+    if (s.rankOn) {
+      const rowx = el('div', 'btnrow');
+      const b0 = el('button', 'sn-btn ghost'); b0.textContent = '🏆 ランキング'; b0.onclick = () => showRank();
+      const bs = el('button', 'sn-btn ghost'); bs.textContent = '⚙ なまえ'; bs.onclick = () => showSettings();
+      rowx.append(b0, bs); extra.push(rowx);
+    }
     if (s.homeUrl) { const b3 = el('button', 'sn-btn ghost'); b3.textContent = 'ゲーム一覧へ'; b3.onclick = () => goHome(); extra.push(b3); }
     box.append(b1, b2, ...extra, sub);
     s.pauseBox = box; s.stage.appendChild(box); b1.focus({ preventScroll: true });
@@ -852,7 +898,7 @@
     s.card.classList.add('show'); s.cardTimer = 2.2;
   }
   function showHelp() {
-    const s = state; if (s.over || s.helpOpen || s.rankOpen) return;
+    const s = state; if (s.over || s.helpOpen || s.rankOpen || s.setOpen) return;
     s.helpOpen = true; s.paused = true; disarm();
     const box = el('div', 'sn-helpbox');
     box.innerHTML = `<h3>アイテム</h3>
@@ -860,7 +906,8 @@
       <b>使い方</b>　⇄ 🔭 🌬 〰 は <b>2回タップ</b>で発動。☄ ● は <b>タップしてから天体をタップ</b>。ほかをタップで取り消し。<br>
       アイテムを使った回のスコアは「アイテムあり」のベストに入る。<br>
       右上の <b>❚❚</b> で一時停止（キーボードは P か Esc）。途中で閉じても、次に開いたとき続きから遊べる。<br>
-      左上の <b>🏆</b> でランキング。ゲームが終わったら名前を入れて送ると、みんなの記録と並ぶ（名前ごとにベスト1件）。</div>
+      左上の <b>🏆</b> でランキング。<b>1回終わるたびに、じどうで記録が送られる</b>（名前ごとにベスト1件が並ぶ）。
+      なまえは最初から付いていて、一時停止の <b>⚙ せってい</b> でいつでも変えられる。自動で送るのを切ることもできる。</div>
       <div class="row"><div class="ic">✦</div><div><b>中性子星（アイテムではない）</b><span>太陽どうしが合体して超新星になると残る。近くの星を引き寄せる。<b>2回タップすると弾けて</b>、まわりの星を消し、遠くの星を吹き飛ばす。自分も消える</span></div></div>`;
     for (const it of ITEMS) {
       const r = el('div', 'row'); r.innerHTML = `<div class="ic"></div><div><b></b><span></span><em></em></div>`;
@@ -875,11 +922,18 @@
   function fmtName(n) { return String(n == null ? '' : n).slice(0, 12); }
   function showRank(opts) {
     opts = opts || {};
-    const s = state; if (!s || s.rankOpen) return;
+    const s = state; if (!s || s.rankOpen || s.setOpen) return;
     s.rankOpen = true; s.paused = true; disarm();
     if (s.armedNeutron) { s.armedNeutron = null; s.mode.hidden = true; }
     const box = el('div', 'sn-rankbox');
-    box.innerHTML = `<h3>ランキング<small>名前ごとのベスト1件・上位${RANK.limit}人</small></h3><div class="sn-rlist"><div class="sn-msg">よみこみ中…</div></div>`;
+    const me = (opts.me && opts.me.name) || playerName();
+    box.innerHTML = `<h3>ランキング<small>名前ごとのベスト1件・上位${RANK.limit}人</small></h3>
+      <div class="sn-rhead">あなた：<b></b></div>
+      <div class="sn-rlist"><div class="sn-msg">よみこみ中…</div></div>`;
+    box.querySelector('.sn-rhead b').textContent = me;
+    const rn = el('button', 'sn-mini'); rn.textContent = '✏️ かえる';
+    rn.onclick = () => showSettings();
+    box.querySelector('.sn-rhead').appendChild(rn);
     const list = box.querySelector('.sn-rlist');
     const btn = el('button', 'sn-btn close'); btn.textContent = 'とじる';
     btn.onclick = () => {
@@ -891,11 +945,11 @@
 
     RankApi.top().then(rows => {
       if (!box.isConnected) return;
-      if (!rows.length) { list.innerHTML = '<div class="sn-msg">まだ誰も登録していない。<br>ゲームが終わったら名前を入れて送ってみて。</div>'; return; }
+      if (!rows.length) { list.innerHTML = '<div class="sn-msg">まだ誰も登録していない。<br>1回遊んで終わると、ここに記録がのる。</div>'; return; }
       list.innerHTML = '';
       rows.forEach((r, i) => {
         const row = el('div', 'sn-row');
-        const mine = opts.me && r.name === opts.me.name && r.score === opts.me.score;
+        const mine = r.name === me;
         if (mine) row.classList.add('me');
         row.innerHTML = `<span class="rk${i < 3 ? ' top' : ''}"></span><span class="nm"></span><span class="sc"></span><span class="it${r.items ? ' on' : ''}"></span>`;
         row.querySelector('.rk').textContent = i < 3 ? ['🥇', '🥈', '🥉'][i] : (i + 1);
@@ -904,8 +958,8 @@
         row.querySelector('.it').textContent = r.items ? 'アイテムあり' : 'アイテムなし';
         list.appendChild(row);
       });
-      const me = list.querySelector('.sn-row.me');
-      if (me) setTimeout(() => me.scrollIntoView({ block: 'center' }), 60);
+      const myRow = list.querySelector('.sn-row.me');
+      if (myRow) setTimeout(() => myRow.scrollIntoView({ block: 'center' }), 60);
     }).catch(() => {
       if (box.isConnected) list.innerHTML = '<div class="sn-msg">いまはランキングにつながらない。<br>電波のいいところで、もう一度ひらいてみて。</div>';
     });
@@ -1059,49 +1113,115 @@
       const b = document.createElement('b'); b.textContent = t.name;
       d.append(im, b); lineup.appendChild(d);
     });
-    if (s.rankOn && s.score > 0) box.appendChild(buildSend(s, maxTier, usedItems));
+    if (s.rankOn && s.score > 0) box.appendChild(buildPost(s, maxTier, usedItems));
     const btn = el('button', 'sn-btn'); btn.textContent = 'もう一回'; btn.onclick = () => restart(true);
     box.appendChild(btn);
     if (s.homeUrl) { const hb = el('button', 'sn-btn ghost'); hb.textContent = 'ゲーム一覧へ'; hb.onclick = () => { location.href = s.homeUrl; }; box.appendChild(hb); } s.stage.appendChild(box); btn.focus();
   }
 
-  // 結果画面の「ランキングに送る」
-  function buildSend(s, maxTier, usedItems) {
-    const wrap = el('div');
+  // ---------------- 送れなかった記録の預かり ----------------
+  function savePending(row) { try { store.set(K.pending, JSON.stringify(row)); } catch (e) {} }
+  function loadPending() { try { const o = JSON.parse(store.get(K.pending, 'null')); return o && o.game ? o : null; } catch (e) { return null; } }
+  function clearPending() { store.del(K.pending); }
+  // 前に送れなかった記録があれば、こっそり送り直す（失敗しても何も言わない）
+  function flushPending() {
+    const p = loadPending(); if (!p) return;
+    RankApi.post(p).then(() => clearPending()).catch(() => {});
+  }
+
+  // 結果画面：1プレイ終わったら自動でランキングへ送る
+  function buildPost(s, maxTier, usedItems) {
+    const wrap = el('div', 'sn-post');
+    const row = { game: RANK.game, name: playerName(), score: s.score, items: usedItems, max_tier: maxTier >= 0 ? maxTier : null };
+    const who = el('div', 'who'); who.innerHTML = `<b></b> として登録`;
+    who.querySelector('b').textContent = row.name;
+    const note = el('div', 'sn-note');
+    const tools = el('div', 'sn-send');
+    const rename = el('button', 'sn-mini'); rename.textContent = '✏️ なまえをかえる';
+    rename.onclick = () => showSettings();
+    const see = el('button', 'sn-mini'); see.textContent = '🏆 ランキングを見る';
+    see.onclick = () => showRank();
+    tools.append(rename, see);
+    wrap.append(who, note, tools);
+
+    const send = () => {
+      note.className = 'sn-note'; note.textContent = 'ランキングに送っています…';
+      RankApi.post(row)
+        .then(() => { s.posted = true; clearPending(); return RankApi.rankOf(s.score).catch(() => null); })
+        .then(rank => {
+          note.className = 'sn-note ok';
+          note.innerHTML = rank ? `いま <b style="color:#fff3cf;font-size:15px">${rank}位</b>` : '記録を登録した';
+          SFX.get();
+        })
+        .catch(() => {
+          savePending(row);
+          note.className = 'sn-note ng';
+          note.textContent = '今はつながらない。あずかっておいて、次につながったとき送る';
+          const again = el('button', 'sn-mini'); again.textContent = 'もう一度おくる';
+          again.onclick = () => { again.remove(); send(); };
+          note.after(again);
+        });
+    };
+
+    if (autoPostOn()) send();
+    else {
+      note.textContent = '自動で送る設定が切ってある';
+      const one = el('button', 'sn-btn'); one.textContent = '🏆 ランキングに送る';
+      one.onclick = () => { one.remove(); send(); };
+      wrap.insertBefore(one, tools);
+    }
+    return wrap;
+  }
+
+  // ---------------- 設定（なまえ・自動送信） ----------------
+  function showSettings() {
+    const s = state; if (!s || s.setOpen) return;
+    s.setOpen = true; s.paused = true; disarm();
+    const box = el('div', 'sn-setbox');
+    box.innerHTML = `<h3>せってい</h3><div class="lbl">ランキングに出るなまえ</div>`;
     const row = el('div', 'sn-send');
     const inp = document.createElement('input');
-    inp.type = 'text'; inp.maxLength = 12; inp.placeholder = 'なまえ'; inp.autocomplete = 'nickname';
-    inp.value = store.get(K.name, '') || '';
+    inp.type = 'text'; inp.maxLength = 12; inp.autocomplete = 'nickname'; inp.value = playerName();
     inp.setAttribute('aria-label', 'ランキングに出す名前');
-    const btn = el('button', 'sn-btn'); btn.textContent = '🏆 ランキングに送る';
-    const note = el('div', 'sn-note'); note.textContent = 'ひらがな・カタカナ・漢字・英数字で12文字まで';
-    row.append(inp, btn); wrap.append(row, note);
+    const dice = el('button', 'sn-mini'); dice.textContent = '🎲';
+    dice.setAttribute('aria-label', 'おまかせで決める');
+    dice.onclick = () => { inp.value = autoName(); note.className = 'sn-note'; note.textContent = NOTE; };
+    row.append(inp, dice);
+    const NOTE = 'ひらがな・カタカナ・漢字・英数字で12文字まで';
+    const note = el('div', 'sn-note'); note.textContent = NOTE;
 
-    const fail = msg => { note.textContent = msg; note.classList.add('ng'); btn.disabled = false; btn.textContent = '🏆 ランキングに送る'; };
-    btn.onclick = () => {
-      if (s.posted) return;
-      const name = inp.value.trim().replace(/\s+/g, ' ');
-      if (!NAME_RE.test(name)) { fail('その名前は使えない。ひらがな・カタカナ・漢字・英数字で12文字までにしてね'); inp.focus(); return; }
-      note.classList.remove('ng'); btn.disabled = true; btn.textContent = '送っています…';
-      store.set(K.name, name);
-      RankApi.post({ game: RANK.game, name, score: s.score, items: usedItems, max_tier: maxTier >= 0 ? maxTier : null })
-        .then(() => {
-          s.posted = true;
-          return RankApi.rankOf(s.score).catch(() => null);
-        })
-        .then(rank => {
-          row.remove();
-          note.classList.remove('ng');
-          note.innerHTML = rank ? `<b style="color:#fff3cf;font-size:14px">${name} さん　${rank}位</b>` : `<b style="color:#fff3cf;font-size:14px">${name} さんの記録を登録した</b>`;
-          const see = el('button', 'sn-btn ghost'); see.textContent = '🏆 ランキングを見る';
-          see.onclick = () => showRank({ me: { name, score: s.score } });
-          wrap.appendChild(see);
-          SFX.get();
-          showRank({ me: { name, score: s.score } });
-        })
-        .catch(() => fail('送れなかった。電波のいいところで、もう一度おしてみて'));
+    const auto = el('div', 'toggle' + (autoPostOn() ? ' on' : ''));
+    auto.setAttribute('role', 'switch'); auto.tabIndex = 0;
+    auto.innerHTML = `<i></i><span>ゲームが終わったら、じどうでランキングに送る</span>`;
+    const flip = () => {
+      const on = !auto.classList.contains('on');
+      auto.classList.toggle('on', on); auto.setAttribute('aria-checked', on ? 'true' : 'false');
+      store.set(K.autopost, on ? '1' : '0');
     };
-    return wrap;
+    auto.setAttribute('aria-checked', autoPostOn() ? 'true' : 'false');
+    auto.onclick = flip;
+    auto.onkeydown = ev => { if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); flip(); } };
+
+    const warn = el('div', 'sn-note');
+    warn.textContent = 'なまえをかえても、前に送った記録は前のなまえのまま残る';
+
+    const ok = el('button', 'sn-btn'); ok.textContent = 'けってい';
+    ok.onclick = () => {
+      const name = inp.value.trim().replace(/\s+/g, ' ');
+      if (!NAME_RE.test(name)) { note.className = 'sn-note ng'; note.textContent = 'その名前は使えない。' + NOTE; inp.focus(); return; }
+      store.set(K.name, name);
+      close();
+    };
+    const close = () => {
+      box.remove(); s.setOpen = false;
+      if (!s.over && !s.pauseOpen && !s.helpOpen && !s.resumeOpen && !s.rankOpen) { s.paused = false; s.lastT = performance.now(); }
+      // 結果画面に出ている名前を直す
+      const w = s.stage.querySelector('.sn-post .who b'); if (w) w.textContent = playerName();
+    };
+    const cancel = el('button', 'sn-btn ghost'); cancel.textContent = 'やめる'; cancel.onclick = close;
+
+    box.append(row, note, auto, warn, ok, cancel);
+    s.stage.appendChild(box); inp.focus({ preventScroll: true });
   }
 
   function updateHud() {
@@ -1217,7 +1337,7 @@
   function ringFront(c, x, y, r, t) { c.save(); c.strokeStyle = t.color; c.lineWidth = r * 0.28; c.beginPath(); c.ellipse(x, y, r * 1.75, r * 0.5, -0.25, 0, Math.PI); c.stroke(); c.restore(); }
   function lighten(hex, k) { const n = parseInt(hex.slice(1), 16); const r = n >> 16, g = (n >> 8) & 255, b = n & 255; const f = v => Math.round(v + (255 - v) * k); return `rgb(${f(r)},${f(g)},${f(b)})`; }
 
-  const api = { showRank, RankApi, mount, unmount, get state() { return state; }, _gameOver: () => { if (state && !state.over) gameOver(); }, _save: () => writeSave(), ITEMS };
+  const api = { showRank, showSettings, playerName, RankApi, mount, unmount, get state() { return state; }, _gameOver: () => { if (state && !state.over) gameOver(); }, _save: () => writeSave(), ITEMS };
   global.SuikaGame = api;
 })(window);
 </script>
